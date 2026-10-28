@@ -1,0 +1,6 @@
+.tools/
+.obsidian/
+.env
+bin/
+*.exe
+coverage.out

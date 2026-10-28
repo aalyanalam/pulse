@@ -1,0 +1,62 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: pulse
+      POSTGRES_PASSWORD: pulse
+      POSTGRES_DB: pulse
+    volumes:
+      - pulse-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U pulse -d pulse"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+  backend:
+    build:
+      context: .
+      args:
+        SERVICE: backend
+    environment:
+      DATABASE_URL: postgres://pulse:pulse@postgres:5432/pulse?sslmode=disable
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, "http://127.0.0.1:8080/readyz"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+  sampleapp:
+    build:
+      context: .
+      args:
+        SERVICE: sampleapp
+    environment:
+      APP_VERSION: v1
+    ports:
+      - "127.0.0.1:8081:8081"
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, "http://127.0.0.1:8081/healthz"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+  agent:
+    build:
+      context: .
+      args:
+        SERVICE: agent
+    environment:
+      NODE_ID: node-1
+      APP_URL: http://sampleapp:8081
+      BACKEND_URL: http://backend:8080
+      COLLECT_INTERVAL: 3s
+    depends_on:
+      backend:
+        condition: service_healthy
+      sampleapp:
+        condition: service_healthy
+volumes:
+  pulse-data:

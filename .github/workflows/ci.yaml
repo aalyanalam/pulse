@@ -1,0 +1,25 @@
+name: checks
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.27.3'
+      - run: go vet ./...
+      - run: go test -race ./...
+      - run: docker compose up --build -d --wait
+      - run: python3 scripts/smoke.py
+      - name: Verify persistence across backend restart
+        run: |
+          curl -fsS 'http://localhost:8080/api/v1/nodes?after=smoke-' > /tmp/nodes-before.json
+          docker compose restart backend
+          python3 scripts/smoke.py
+          curl -fsS 'http://localhost:8080/api/v1/nodes?after=smoke-' > /tmp/nodes-after.json
+          python3 -c "import json; before=json.load(open('/tmp/nodes-before.json')); after=json.load(open('/tmp/nodes-after.json')); assert before and all(n in after for n in before)"
+      - if: always()
+        run: docker compose logs
+      - if: always()
+        run: docker compose down
