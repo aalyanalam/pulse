@@ -2,6 +2,10 @@
 
 Pulse is a machine telemetry and diagnostics platform for investigating whether a software release made monitored applications slower or less reliable. Its local demo represents each machine as a sample Go application and a companion agent; release detection and the dashboard are planned milestones.
 
+## Obsidian vault and handoff
+
+Open this repository folder as an Obsidian vault. Project notes and portable vault settings are versioned with the code; device-specific workspace layouts stay local. Read [HANDOFF.md](HANDOFF.md) for current state, verification gaps, and next actions. Ask to update the handoff whenever you want the latest work recorded; [AGENTS.md](AGENTS.md) defines that workflow for future coding sessions.
+
 ## Current implementation
 
 The first vertical slice includes a sample application, polling agent, HTTP ingestion and query API, PostgreSQL storage, and Docker Compose setup. Samples retain their original version and collection timestamp; repeated sample identities are stored once. The full roadmap is in [Pulse - Project Roadmap.md](Pulse%20-%20Project%20Roadmap.md).
