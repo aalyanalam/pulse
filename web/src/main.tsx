@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import "./style.css";
 type Node = {
@@ -181,10 +181,26 @@ function Chart({
     </section>
   );
 }
+// Shareable links: #/node/<id> opens node details, #/compare/<id> release comparison.
+function readRoute(): { tab: string; node: string } {
+  const [, kind = "", id = ""] = location.hash.replace(/^#/, "").split("/");
+  const tab =
+    kind === "node"
+      ? "Node details"
+      : kind === "compare"
+        ? "Release comparison"
+        : "Overview";
+  return { tab, node: decodeURIComponent(id) };
+}
+function routeFor(tab: string, node: string): string {
+  const kind =
+    tab === "Node details" ? "node" : tab === "Release comparison" ? "compare" : "";
+  return kind ? `#/${kind}/${encodeURIComponent(node)}` : "#/";
+}
 function App() {
   const [nodes, setNodes] = useState<Node[]>([]),
-    [selected, setSelected] = useState(""),
-    [tab, setTab] = useState("Overview"),
+    [selected, setSelected] = useState(() => readRoute().node),
+    [tab, setTab] = useState(() => readRoute().tab),
     [error, setError] = useState(""),
     [loaded, setLoaded] = useState(false),
     [updated, setUpdated] = useState(""),
@@ -208,6 +224,19 @@ function App() {
     } | null>(null),
     [compareError, setCompareError] = useState(""),
     [busy, setBusy] = useState(false);
+  useEffect(() => {
+    const hash = routeFor(tab, selected);
+    if (location.hash !== hash) history.replaceState(null, "", hash);
+  }, [tab, selected]);
+  useEffect(() => {
+    const follow = () => {
+      const route = readRoute();
+      setTab(route.tab);
+      setSelected(route.node);
+    };
+    window.addEventListener("hashchange", follow);
+    return () => window.removeEventListener("hashchange", follow);
+  }, []);
   useEffect(() => {
     let stopped = false;
     let timer: ReturnType<typeof setTimeout>;
@@ -295,8 +324,8 @@ function App() {
       clearTimeout(timer);
     };
   }, [selected, minutes]);
-  async function compare(e: React.FormEvent) {
-    e.preventDefault();
+  async function compare(e?: React.FormEvent) {
+    e?.preventDefault();
     setBusy(true);
     setComparison(null);
     setCompareError("");
@@ -318,6 +347,14 @@ function App() {
       setBusy(false);
     }
   }
+  // The first visit to the comparison view (including #/compare/<id> links) runs the default comparison.
+  const autoCompared = useRef(false);
+  useEffect(() => {
+    if (!autoCompared.current && tab === "Release comparison" && selected) {
+      autoCompared.current = true;
+      void compare();
+    }
+  }, [tab, selected]);
   const node = nodes.find((n) => n.id === selected);
   return (
     <>
