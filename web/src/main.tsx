@@ -213,10 +213,12 @@ function App() {
     [minutes, setMinutes] = useState(30);
   const [base, setBase] = useState("v1"),
     [candidate, setCandidate] = useState("v2-slow"),
+    // Window inputs hold whole minutes, so the default end rounds up to the next
+    // minute; truncating "now" would drop the most recent data.
     [from, setFrom] = useState(local(new Date(Date.now() - 3600000))),
-    [to, setTo] = useState(local(new Date())),
+    [to, setTo] = useState(local(new Date(Date.now() + 60000))),
     [from2, setFrom2] = useState(local(new Date(Date.now() - 3600000))),
-    [to2, setTo2] = useState(local(new Date())),
+    [to2, setTo2] = useState(local(new Date(Date.now() + 60000))),
     [comparison, setComparison] = useState<{
       node_id: string;
       baseline: Summary;
