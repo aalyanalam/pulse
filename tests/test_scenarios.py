@@ -59,6 +59,8 @@ def test_application_failure_and_recovery():
         compose('stop', 'sampleapp')
         incident = wait_for('application failure', lambda: opened('application_unavailable', previous))
         assert not opened('agent_unreachable', previous), incidents()
+        assert incident['evidence']['consecutive_failures'] >= 3, incident
+        assert incident['evidence']['last_heartbeat_at'], incident
     finally:
         compose('start', 'sampleapp')
     wait_for('application recovery', lambda: resolved(incident['id']))
@@ -69,17 +71,27 @@ def test_agent_disconnect_and_recovery():
     try:
         compose('stop', 'agent')
         incident = wait_for('agent unreachable', lambda: opened('agent_unreachable', previous), 35)
+        # Dated at the timeout: 15 s after the later of the last heartbeat and the
+        # start of evaluation (a backend restart must not count against the agent).
+        evidence = incident['evidence']
+        parse = lambda v: dt.datetime.fromisoformat(v.replace('Z', '+00:00'))
+        observed_from = max(parse(evidence['last_heartbeat_at']), parse(evidence['evaluation_started_at']))
+        assert evidence['timeout_seconds'] == 15, incident
+        assert parse(incident['opened_at']) - observed_from == dt.timedelta(seconds=15), incident
     finally:
         compose('start', 'agent')
     wait_for('agent recovery', lambda: resolved(incident['id']))
 
 
 def test_backend_outage_buffering():
+    previous = {item['id'] for item in incidents()}
     start = dt.datetime.now(dt.timezone.utc)
     try:
         compose('stop', 'backend')
         start = dt.datetime.now(dt.timezone.utc)
-        time.sleep(12)  # Allow several scheduled collections while delivery is unavailable.
+        # Longer than the 15 s heartbeat timeout: missing heartbeats during a
+        # backend outage must not be blamed on the agent.
+        time.sleep(18)
         end = dt.datetime.now(dt.timezone.utc)
     finally:
         compose('start', 'backend')
@@ -92,10 +104,12 @@ def test_backend_outage_buffering():
     def buffered():
         samples = get('/api/v1/nodes/node-1/metrics?' + query)
         return samples if len(samples) >= 3 else None
-    recovered = wait_for('buffered samples (12 s outage, 3 s collection)', buffered)
+    recovered = wait_for('buffered samples (18 s outage, 3 s collection)', buffered)
     # Nothing buffered may be lost: sequences within the agent session are contiguous.
     sequences = sorted(s['sequence'] for s in recovered if s['session_id'] == recovered[0]['session_id'])
     assert sequences == list(range(sequences[0], sequences[0] + len(sequences))), recovered
+    false_alarms = [i for i in incidents() if i['id'] not in previous and i['kind'] == 'agent_unreachable']
+    assert not false_alarms, false_alarms
 
 
 def test_release_regressions_and_rollback():

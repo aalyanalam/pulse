@@ -86,14 +86,29 @@ func (a API) heartbeat(w http.ResponseWriter, r *http.Request) {
 
 // Evaluate opens incidents within roughly two seconds of the 15-second timeout.
 // Row locks serialize decisions with concurrent heartbeat recovery.
+//
+// Heartbeats cannot arrive while this backend or its database is unavailable,
+// so staleness is measured from the later of the last heartbeat and the
+// database time at which evaluation (re)started. An outage therefore never
+// counts against agents; a genuinely silent agent is reported one timeout
+// after evaluation resumes.
 func (a API) Evaluate(ctx context.Context) {
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
+	var since time.Time
 	for {
 		if ctx.Err() != nil {
 			return
 		}
-		if err := a.evaluateOnce(ctx); err != nil && ctx.Err() == nil {
+		var err error
+		if since.IsZero() {
+			err = a.DB.QueryRowContext(ctx, `SELECT clock_timestamp()`).Scan(&since)
+		}
+		if err == nil {
+			err = a.evaluateOnce(ctx, since)
+		}
+		if err != nil && ctx.Err() == nil {
+			since = time.Time{} // Measure staleness from recovery, not from before the failure.
 			slog.Warn("heartbeat evaluation failed", "error", err)
 		}
 		select {
@@ -104,7 +119,7 @@ func (a API) Evaluate(ctx context.Context) {
 	}
 }
 
-func (a API) evaluateOnce(parent context.Context) error {
+func (a API) evaluateOnce(parent context.Context, since time.Time) error {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
 	tx, err := a.DB.BeginTx(ctx, nil)
@@ -113,10 +128,13 @@ func (a API) evaluateOnce(parent context.Context) error {
 	}
 	defer tx.Rollback()
 	_, err = tx.ExecContext(ctx, `WITH stale AS (
- SELECT node_id,last_seen FROM heartbeats WHERE last_seen < clock_timestamp()-interval '15 seconds' FOR UPDATE
- ) INSERT INTO incidents(node_id,opened_at)
- SELECT node_id,last_seen+interval '15 seconds' FROM stale
- ON CONFLICT(node_id,kind) WHERE resolved_at IS NULL DO NOTHING`)
+ SELECT node_id,last_seen,greatest(last_seen,$1::timestamptz) AS observed_from FROM heartbeats
+ WHERE greatest(last_seen,$1::timestamptz) < clock_timestamp()-interval '15 seconds' FOR UPDATE
+ ) INSERT INTO incidents(node_id,opened_at,evidence)
+ SELECT node_id,observed_from+interval '15 seconds',
+ jsonb_build_object('rule','no heartbeat for 15 seconds','last_heartbeat_at',last_seen,'timeout_seconds',15,
+ 'evaluation_started_at',$1::timestamptz) FROM stale
+ ON CONFLICT(node_id,kind) WHERE resolved_at IS NULL DO NOTHING`, since)
 	if err != nil {
 		return err
 	}
@@ -129,27 +147,31 @@ func (a API) evaluateOnce(parent context.Context) error {
 func (a API) incidents(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
-	rows, err := a.DB.QueryContext(ctx, `SELECT id,kind,opened_at,resolved_at,version FROM incidents WHERE node_id=$1 ORDER BY id DESC LIMIT 100`, r.PathValue("id"))
+	rows, err := a.DB.QueryContext(ctx, `SELECT id,kind,opened_at,resolved_at,version,evidence FROM incidents WHERE node_id=$1 ORDER BY id DESC LIMIT 100`, r.PathValue("id"))
 	if err != nil {
 		failure(w, err)
 		return
 	}
 	defer rows.Close()
 	type incident struct {
-		Version    string     `json:"version"`
-		ID         int64      `json:"id"`
-		Kind       string     `json:"kind"`
-		OpenedAt   time.Time  `json:"opened_at"`
-		ResolvedAt *time.Time `json:"resolved_at"`
+		Version    string          `json:"version"`
+		ID         int64           `json:"id"`
+		Kind       string          `json:"kind"`
+		OpenedAt   time.Time       `json:"opened_at"`
+		ResolvedAt *time.Time      `json:"resolved_at"`
+		Evidence   json.RawMessage `json:"evidence"`
 	}
 	result := []incident{}
 	for rows.Next() {
 		var item incident
 		var resolved sql.NullTime
-		if err := rows.Scan(&item.ID, &item.Kind, &item.OpenedAt, &resolved, &item.Version); err != nil {
+		// Scanning into []byte copies the driver's buffer; json.RawMessage would not.
+		var evidence []byte
+		if err := rows.Scan(&item.ID, &item.Kind, &item.OpenedAt, &resolved, &item.Version, &evidence); err != nil {
 			failure(w, err)
 			return
 		}
+		item.Evidence = evidence
 		if resolved.Valid {
 			item.ResolvedAt = &resolved.Time
 		}
@@ -171,8 +193,10 @@ func updateApplicationHealth(ctx context.Context, tx *sql.Tx, id string, healthy
 	if err != nil {
 		return err
 	}
-	_, err = tx.ExecContext(ctx, `INSERT INTO incidents(node_id,kind,opened_at)
- SELECT node_id,'application_unavailable',clock_timestamp() FROM heartbeats
+	_, err = tx.ExecContext(ctx, `INSERT INTO incidents(node_id,kind,opened_at,evidence)
+ SELECT node_id,'application_unavailable',clock_timestamp(),
+ jsonb_build_object('rule','3 consecutive failed application health checks reported by the agent',
+ 'consecutive_failures',app_failures,'last_heartbeat_at',last_seen) FROM heartbeats
  WHERE node_id=$1 AND app_failures>=3
  ON CONFLICT(node_id,kind) WHERE resolved_at IS NULL DO NOTHING`, id)
 	if err != nil {

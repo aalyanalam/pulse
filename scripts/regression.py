@@ -50,6 +50,14 @@ try:
         deploy(version)
         opened = workload(45, expected_kind=kind, baseline=baseline)
         assert opened["version"] == version, opened
+        # The incident records the three intervals that opened it, each above the threshold.
+        intervals = opened["evidence"]["intervals"]
+        assert opened["evidence"]["rule"] and len(intervals) == 3, opened
+        assert all(i["requests"] >= 5 for i in intervals), opened
+        if version == "v2-slow":
+            assert all(i["mean_latency_ms"] > 100 for i in intervals), opened
+        else:
+            assert all(i["error_rate"] > 0.1 for i in intervals), opened
         print(f"PASS {version} opened {opened}", flush=True)
         deploy("v1")
         resolved = workload(45, recovery_id=opened["id"])

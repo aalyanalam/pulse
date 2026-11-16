@@ -10,6 +10,9 @@ ALTER TABLE incidents ADD COLUMN version TEXT NOT NULL DEFAULT '';
 CREATE INDEX samples_latest ON samples(node_id,collected_at DESC);
 `
 
+// Each incident records the observations that opened it. Older rows keep '{}'.
+const evidenceSchema = `ALTER TABLE incidents ADD COLUMN evidence JSONB NOT NULL DEFAULT '{}'::jsonb;`
+
 // Three adjacent, populated measurement intervals must agree. Process changes,
 // counter resets, gaps, and unknown process identities invalidate the decision.
 func evaluateRegressions(ctx context.Context, tx *sql.Tx) error {
@@ -32,23 +35,27 @@ func evaluateRegressions(ctx context.Context, tx *sql.Tx) error {
  bool_and(e::double precision/n > 0.1) AS errors_bad,
  bool_and(e::double precision/n < 0.05) AS errors_good,
  bool_and(latency/n > 100) AS latency_bad,
- bool_and(latency/n < 50) AS latency_good
+ bool_and(latency/n < 50) AS latency_good,
+ jsonb_agg(jsonb_build_object('ended_at',collected_at,'requests',n,'errors',e,
+ 'error_rate',round(e::numeric/n,4),'mean_latency_ms',round((latency/n)::numeric,2)) ORDER BY collected_at) AS intervals
  FROM deltas WHERE n>=5 AND e>=0 AND e<=n AND latency>=0
  AND gap > interval '0 seconds' AND gap <= interval '10 seconds'
  AND app_process_id<>'' AND app_process_id=previous_process AND version=previous_version
  GROUP BY node_id HAVING count(*)=3 AND max(collected_at)>clock_timestamp()-interval '10 seconds'
  AND max(collected_at)<=clock_timestamp()
  ), decisions AS (
- SELECT node_id,version,'elevated_errors' AS kind,errors_bad AS bad,errors_good AS good FROM evidence
+ SELECT node_id,version,'elevated_errors' AS kind,errors_bad AS bad,errors_good AS good,
+ jsonb_build_object('rule','error rate above 10% in 3 consecutive intervals of at least 5 requests','intervals',intervals) AS evidence FROM evidence
  UNION ALL
- SELECT node_id,version,'slow_responses',latency_bad,latency_good FROM evidence
+ SELECT node_id,version,'slow_responses',latency_bad,latency_good,
+ jsonb_build_object('rule','mean latency above 100 ms in 3 consecutive intervals of at least 5 requests','intervals',intervals) FROM evidence
  ), recovered AS (
  UPDATE incidents i SET resolved_at=clock_timestamp() FROM decisions d
  WHERE i.node_id=d.node_id AND i.kind=d.kind AND i.resolved_at IS NULL AND d.good
  RETURNING i.id
  )
- INSERT INTO incidents(node_id,kind,opened_at,version)
- SELECT node_id,kind,clock_timestamp(),version FROM decisions WHERE bad
+ INSERT INTO incidents(node_id,kind,opened_at,version,evidence)
+ SELECT node_id,kind,clock_timestamp(),version,evidence FROM decisions WHERE bad
  ON CONFLICT(node_id,kind) WHERE resolved_at IS NULL DO NOTHING`)
 	return err
 }

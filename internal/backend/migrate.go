@@ -19,7 +19,7 @@ func Migrate(ctx context.Context, db *sql.DB) error {
 	if _, err = tx.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS schema_migrations(version INTEGER PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())`); err != nil {
 		return err
 	}
-	migrations := []string{Schema, `ALTER TABLE samples ADD COLUMN app_process_id TEXT NOT NULL DEFAULT '' CHECK(octet_length(app_process_id)<=128)`, heartbeatSchema, applicationHealthSchema, regressionSchema}
+	migrations := []string{Schema, `ALTER TABLE samples ADD COLUMN app_process_id TEXT NOT NULL DEFAULT '' CHECK(octet_length(app_process_id)<=128)`, heartbeatSchema, applicationHealthSchema, regressionSchema, evidenceSchema}
 	var version int
 	if err = tx.QueryRowContext(ctx, `SELECT COALESCE(MAX(version),0) FROM schema_migrations`).Scan(&version); err != nil {
 		return err

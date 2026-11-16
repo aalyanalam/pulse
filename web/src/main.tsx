@@ -17,13 +17,45 @@ type Sample = {
   errors: number;
   total_latency_ms: number;
 };
+type EvidenceInterval = {
+  ended_at: string;
+  requests: number;
+  errors: number;
+  error_rate: number;
+  mean_latency_ms: number;
+};
+type Evidence = {
+  rule?: string;
+  intervals?: EvidenceInterval[];
+  last_heartbeat_at?: string;
+  consecutive_failures?: number;
+};
 type Incident = {
   id: number;
   kind: string;
   version: string;
   opened_at: string;
   resolved_at: string | null;
+  evidence?: Evidence;
 };
+
+// One readable line describing the observations that opened an incident.
+function evidenceText(i: Incident): string {
+  const e = i.evidence;
+  if (!e?.rule) return "Evidence not recorded (incident predates evidence capture)";
+  if (e.intervals?.length) {
+    const values = e.intervals.map((v) =>
+      i.kind === "elevated_errors"
+        ? (v.error_rate * 100).toFixed(1) + "%"
+        : v.mean_latency_ms.toFixed(0) + " ms",
+    );
+    const requests = e.intervals.map((v) => v.requests).join(", ");
+    return `${e.rule}: ${values.join(", ")} (requests per interval: ${requests})`;
+  }
+  if (e.last_heartbeat_at)
+    return `${e.rule}; last heartbeat ${date(e.last_heartbeat_at)}`;
+  return e.rule;
+}
 type Summary = {
   version: string;
   requests: number;
@@ -555,6 +587,9 @@ function App() {
                               <p>
                                 {i.version || "Version unknown"} · Opened{" "}
                                 {date(i.opened_at)}
+                              </p>
+                              <p className="muted">
+                                Evidence: {evidenceText(i)}
                               </p>
                               <p>
                                 {i.resolved_at
