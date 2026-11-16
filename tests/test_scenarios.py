@@ -86,8 +86,16 @@ def test_backend_outage_buffering():
     wait_for('backend readiness', lambda: get('/readyz'))
     from urllib.parse import urlencode
     query = urlencode({'from': start.isoformat(), 'to': end.isoformat(), 'limit': 1000})
-    recovered = wait_for('buffered samples', lambda: get('/api/v1/nodes/node-1/metrics?' + query))
-    assert len(recovered) >= 2, recovered
+    # The batch being retried when the backend returns holds only the first
+    # outage sample; the rest follow on the next flush. Wait for the full
+    # condition rather than the first non-empty response.
+    def buffered():
+        samples = get('/api/v1/nodes/node-1/metrics?' + query)
+        return samples if len(samples) >= 3 else None
+    recovered = wait_for('buffered samples (12 s outage, 3 s collection)', buffered)
+    # Nothing buffered may be lost: sequences within the agent session are contiguous.
+    sequences = sorted(s['sequence'] for s in recovered if s['session_id'] == recovered[0]['session_id'])
+    assert sequences == list(range(sequences[0], sequences[0] + len(sequences))), recovered
 
 
 def test_release_regressions_and_rollback():
