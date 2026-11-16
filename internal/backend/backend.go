@@ -31,6 +31,7 @@ func failure(w http.ResponseWriter, err error) {
 func (a API) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/v1/fleet", a.fleet)
+	mux.HandleFunc("GET /api/v1/fleet/summary", a.fleetSummary)
 	mux.HandleFunc("POST /api/v1/nodes/{id}/heartbeat", a.heartbeat)
 	mux.HandleFunc("GET /api/v1/nodes/{id}/incidents", a.incidents)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) { respond(w, 200, map[string]string{"status": "ok"}) })

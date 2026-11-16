@@ -17,8 +17,16 @@ def row():
 assert row()['status']=='unknown' and row()['last_seen'] is None
 call('nodes/'+node+'/heartbeat',{'application_healthy':True})
 assert row()['status']=='reporting' and row()['memory_bytes']==1024
+# Search is a case-insensitive substring match.
+assert [n['id'] for n in call('fleet?q='+node[3:].upper())]==[node]
+attention=lambda: [n['id'] for n in call('fleet?attention=1&q='+node)]
+assert attention()==[]
 for _ in range(3): call('nodes/'+node+'/heartbeat',{'application_healthy':False})
 assert row()['status']=='incident'
+assert attention()==[node]
+summary=call('fleet/summary')
+assert summary['total']==sum(summary['by_status'].values()) and summary['by_status']['incident']>=1, summary
 for _ in range(3): call('nodes/'+node+'/heartbeat',{'application_healthy':True})
 assert row()['status']=='reporting'
-print('PASS: fleet unknown identity, heartbeat reporting, application failure, and recovery')
+assert attention()==[]
+print('PASS: fleet unknown identity, heartbeat reporting, application failure, recovery, search, attention filter and summary')

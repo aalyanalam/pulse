@@ -16,6 +16,11 @@ func TestRejectInvalidRequestsBeforeStorage(t *testing.T) {
 		}
 	}
 	w := httptest.NewRecorder()
+	h.ServeHTTP(w, httptest.NewRequest("GET", "/api/v1/fleet?q="+strings.Repeat("x", 129), nil))
+	if w.Code != 400 {
+		t.Fatalf("oversized fleet search: %d", w.Code)
+	}
+	w = httptest.NewRecorder()
 	h.ServeHTTP(w, httptest.NewRequest("GET", "/api/v1/nodes/n/metrics", nil))
 	if w.Code != 400 {
 		t.Fatalf("unbounded query: %d", w.Code)

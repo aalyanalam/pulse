@@ -8,7 +8,7 @@ Pulse is a telemetry and diagnostics platform that answers that question. Agents
 
 **Scope:** a local simulation. Each "node" is a small Go application plus a companion agent, run in Docker Compose. Faulty releases are built into the sample application: `v2-slow` adds about 200 ms per request, and `v2-errors` fails every third request. No physical hardware is monitored.
 
-![Node details: latency and error charts, version timeline, and incidents with their evidence](docs/screenshots/node-details.png)
+![Node investigation: latency and error-rate charts with release markers and incident bands, and incidents with the evidence that opened them](docs/screenshots/node-details.png)
 
 ## Quick start
 
@@ -42,7 +42,7 @@ Step 5: roll back to v1 and wait for recovery
 
 Then explore:
 
-- the dashboard at http://localhost:3000 (`#/node/node-1` and `#/compare/node-1` are shareable links);
+- the dashboard at http://localhost:3000. Every view is a shareable link; `#/node/node-1?minutes=5` frames a demo run, and `#/compare/node-1` compares the latest release;
 - the API at http://localhost:8080;
 - the sample application at http://localhost:8081.
 
@@ -52,7 +52,15 @@ Stop with `docker compose down`. Data stays in a named volume; `docker compose d
 
 | Fleet overview | Release comparison |
 | --- | --- |
-| ![Fleet overview with heartbeat status, version, Go heap and last contact](docs/screenshots/overview.png) | ![Release comparison of v1 and v2-slow: 0.57 ms versus 202.2 ms mean latency](docs/screenshots/release-comparison.png) |
+| ![Fleet overview: fleet-wide status tiles, node search, needs-attention filter and heartbeat-based status](docs/screenshots/overview.png) | ![Release comparison of v1 and v2-slow: a plain-language verdict and a change column marking latency about 170 times slower as worse](docs/screenshots/release-comparison.png) |
+
+The dashboard design follows established usability and dashboard guidance:
+
+- **Status first.** A live/reconnecting indicator is always visible. Fleet-wide tiles lead with what needs attention, and open incidents appear as alerts at the top of a node's page.
+- **Recognition over recall.** Node search replaces paging through about 1,000 test nodes. Version fields suggest the versions actually observed. The comparison view pre-fills the latest regression against the release before it.
+- **Context on the chart.** Release changes are drawn as labelled markers and incidents as shaded bands, so cause and effect sit on one timeline. Each incident links straight to a comparison of its release.
+- **Accessible encoding.** Status is always an icon plus a label, never color alone, and the data color passes contrast checks in light and dark mode. Charts work with the keyboard and have a table view; touch targets are at least 44 px on phones.
+- **Real navigation.** Every view is a link with breadcrumbs and a working back button. Dark mode follows the operating system.
 
 ## Architecture
 
@@ -82,7 +90,7 @@ flowchart LR
 | Sample application | `cmd/sampleapp` | Real SHA-256 work per request; cumulative counters; built-in faulty versions |
 | Agent | `cmd/agent` | Independent collection, bounded queue, batched delivery with retries, heartbeats with application health probes |
 | Backend | `cmd/backend`, `internal/backend` | Ingestion, history queries, fleet status, version comparison, incident evaluation, forward-only migrations |
-| Dashboard | `web/` | Fleet overview, node charts and timelines, release comparison; polls every 5 s |
+| Dashboard | `web/` | Fleet search and status, node investigation (annotated charts, incidents with evidence), release comparison; polls every 5 s |
 | Tooling | `scripts/`, `tests/` | Demo, integration checks, pytest fault scenarios, load and fault-under-load benchmarks |
 
 ## How it works
@@ -225,7 +233,8 @@ Diagnostics for your own runs:
 | --- | --- |
 | `POST /api/v1/telemetry/batches` | Accept 1–100 samples (1 MiB limit). Returns `202` with the count newly inserted, after commit. |
 | `POST /api/v1/nodes/{id}/heartbeat` | Record contact and an optional `application_healthy` probe result |
-| `GET /api/v1/fleet?after=<id>` | Status, version, Go heap, last contact; 100 nodes per page, including heartbeat-only nodes |
+| `GET /api/v1/fleet?after=<id>&q=<text>&attention=1` | Status, version, Go heap, last contact; 100 nodes per page, including heartbeat-only nodes. `q` is a case-insensitive ID search; `attention=1` keeps nodes with an open incident or no recent heartbeat. |
+| `GET /api/v1/fleet/summary` | Node counts by status for the whole fleet |
 | `GET /api/v1/nodes?after=<id>` | Current version and latest collection time; 100 per page |
 | `GET /api/v1/nodes/{id}/metrics?from=&to=&limit=` | Historical samples. RFC3339 window of at most 24 h, start-inclusive; `limit` up to 1000 (default 100). |
 | `GET /api/v1/nodes/{id}/incidents` | Latest 100 incidents with kind, version, open and resolve times, and evidence |

@@ -133,7 +133,7 @@ def main():
         node = wait_for('node-1 heartbeat', lambda: next((n for n in get('/fleet?after=node-0')
                                                           if n['id'] == 'node-1' and n['last_seen']), None), 30)
         say(f"   node-1 status: {node['status']}, version {node['version']}")
-        say(f'   Dashboard: {DASHBOARD}/#/node/node-1')
+        say(f'   Dashboard: {DASHBOARD}/#/node/node-1?minutes=5')
 
         step(2, f'deploy faulty release {version} to node-1', args.pause)
         known = {i['id'] for i in get('/nodes/node-1/incidents')}
@@ -146,7 +146,7 @@ def main():
             (i for i in get('/nodes/node-1/incidents') if i['kind'] == kind and i['id'] not in known
              and i['resolved_at'] is None), None), 90)
         say(f'   Incident opened {time.monotonic() - deployed:.0f} s after deployment: {incident_line(incident)}')
-        say(f'   Dashboard: {DASHBOARD}/#/node/node-1 (incident timeline)')
+        say(f'   Dashboard: {DASHBOARD}/#/node/node-1?minutes=5 (incident timeline)')
 
         step(4, f'compare v1 with {version}', args.pause)
         time.sleep(6)  # A few more faulty intervals for the comparison.
