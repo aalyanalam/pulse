@@ -8,6 +8,7 @@ import (
 )
 
 type Stats struct {
+	AppProcessID   string  `json:"app_process_id"`
 	Version        string  `json:"version"`
 	Requests       int64   `json:"requests"`
 	Errors         int64   `json:"errors"`
@@ -35,6 +36,9 @@ func (b Batch) Validate() error {
 	for _, s := range b.Samples {
 		if s.NodeID == "" || len(s.NodeID) > 128 || s.SessionID == "" || len(s.SessionID) > 128 || s.Version == "" || len(s.Version) > 128 {
 			return fmt.Errorf("node_id, session_id and version must contain 1–128 bytes")
+		}
+		if len(s.AppProcessID) > 128 {
+			return fmt.Errorf("app_process_id exceeds 128 bytes")
 		}
 		if s.Sequence < 1 || s.CollectedAt.IsZero() || s.CollectedAt.After(time.Now().Add(5*time.Minute)) {
 			return fmt.Errorf("invalid sequence or collection timestamp")

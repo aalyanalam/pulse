@@ -1,4 +1,16 @@
 services:
+  dashboard:
+    build: ./web
+    ports:
+      - "127.0.0.1:3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, "http://127.0.0.1/"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
   postgres:
     image: postgres:17-alpine
     environment:
@@ -13,14 +25,19 @@ services:
       timeout: 3s
       retries: 15
   backend:
+    # Benchmarks may select a prebuilt variant; the default is the image built here.
+    image: ${PULSE_BACKEND_IMAGE:-pulse-backend}
     build:
       context: .
       args:
         SERVICE: backend
     environment:
       DATABASE_URL: postgres://pulse:pulse@postgres:5432/pulse?sslmode=disable
+      DEBUG_ADDR: ":6060"
     ports:
       - "127.0.0.1:8080:8080"
+      # pprof, expvar and connection-pool statistics; loopback-only, local diagnostics.
+      - "127.0.0.1:6060:6060"
     depends_on:
       postgres:
         condition: service_healthy
@@ -35,7 +52,7 @@ services:
       args:
         SERVICE: sampleapp
     environment:
-      APP_VERSION: v1
+      APP_VERSION: ${APP_VERSION:-v1}
     ports:
       - "127.0.0.1:8081:8081"
     healthcheck:

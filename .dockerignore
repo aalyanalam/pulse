@@ -3,3 +3,7 @@
 .obsidian
 bin
 *.md
+web/node_modules
+web/dist
+benchmarks
+benchmark-results.json

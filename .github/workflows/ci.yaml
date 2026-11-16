@@ -3,22 +3,40 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
           go-version: '1.27.3'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install -r requirements-test.txt
       - run: go vet ./...
       - run: go test -race ./...
       - run: docker compose up --build -d --wait
-      - run: python3 scripts/smoke.py
+      - run: python scripts/smoke.py
+      - run: python scripts/ingest_semantics.py
+      - run: python scripts/comparison.py
+      - run: python scripts/fleet.py
       - name: Verify persistence across backend restart
         run: |
           curl -fsS 'http://localhost:8080/api/v1/nodes?after=smoke-' > /tmp/nodes-before.json
           docker compose restart backend
-          python3 scripts/smoke.py
+          python scripts/smoke.py
           curl -fsS 'http://localhost:8080/api/v1/nodes?after=smoke-' > /tmp/nodes-after.json
-          python3 -c "import json; before=json.load(open('/tmp/nodes-before.json')); after=json.load(open('/tmp/nodes-after.json')); assert before and all(n in after for n in before)"
+          python -c "import json; before=json.load(open('/tmp/nodes-before.json')); after=json.load(open('/tmp/nodes-after.json')); assert before and all(n in after for n in before)"
+      - name: Fault scenarios (failure, disconnect, outage buffering, faulty releases, rollback)
+        env:
+          PULSE_DIAGNOSTICS_DIR: ${{ runner.temp }}/pulse-diagnostics
+        run: python -m pytest -v -s tests/test_scenarios.py
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pulse-diagnostics
+          path: ${{ runner.temp }}/pulse-diagnostics
+          if-no-files-found: ignore
       - if: always()
         run: docker compose logs
       - if: always()

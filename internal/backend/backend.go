@@ -30,6 +30,9 @@ func failure(w http.ResponseWriter, err error) {
 
 func (a API) Handler() http.Handler {
 	mux := http.NewServeMux()
+	mux.HandleFunc("GET /api/v1/fleet", a.fleet)
+	mux.HandleFunc("POST /api/v1/nodes/{id}/heartbeat", a.heartbeat)
+	mux.HandleFunc("GET /api/v1/nodes/{id}/incidents", a.incidents)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) { respond(w, 200, map[string]string{"status": "ok"}) })
 	mux.HandleFunc("GET /readyz", func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
@@ -43,10 +46,12 @@ func (a API) Handler() http.Handler {
 	mux.HandleFunc("POST /api/v1/telemetry/batches", a.ingest)
 	mux.HandleFunc("GET /api/v1/nodes", a.nodes)
 	mux.HandleFunc("GET /api/v1/nodes/{id}/metrics", a.metrics)
+	mux.HandleFunc("GET /api/v1/nodes/{id}/compare", a.compare)
 	return mux
 }
 
 func (a API) ingest(w http.ResponseWriter, r *http.Request) {
+	started := time.Now()
 	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	d := json.NewDecoder(r.Body)
 	d.DisallowUnknownFields()
@@ -65,43 +70,61 @@ func (a API) ingest(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
+	timer := ingestTimer{started: started}
+	phase := time.Now()
 	tx, err := a.DB.BeginTx(ctx, nil)
+	timer.begin = time.Since(phase)
 	if err != nil {
 		failure(w, err)
 		return
 	}
 	defer tx.Rollback()
-	var inserted int64
-	for _, s := range batch.Samples {
-		_, err = tx.ExecContext(ctx, `INSERT INTO nodes(id,version,latest_collected_at) VALUES($1,$2,$3) ON CONFLICT(id) DO NOTHING`, s.NodeID, s.Version, s.CollectedAt)
-		if err != nil {
+	exec := func(query string, args ...any) (sql.Result, error) {
+		phase := time.Now()
+		result, err := tx.ExecContext(ctx, query, args...)
+		timer.statement += time.Since(phase)
+		timer.statements++
+		return result, err
+	}
+	samples := firstOccurrences(batch.Samples)
+	// Create each distinct node once, from its first sample in batch order.
+	created := make(map[string]bool)
+	for _, s := range samples {
+		if created[s.NodeID] {
+			continue
+		}
+		created[s.NodeID] = true
+		if _, err := exec(`INSERT INTO nodes(id,version,latest_collected_at) VALUES($1,$2,$3) ON CONFLICT(id) DO NOTHING`, s.NodeID, s.Version, s.CollectedAt); err != nil {
 			failure(w, err)
 			return
-		}
-		result, err := tx.ExecContext(ctx, `INSERT INTO samples(node_id,session_id,sequence,collected_at,version,requests,errors,total_latency_ms,memory_bytes) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT(node_id,session_id,sequence) DO NOTHING`, s.NodeID, s.SessionID, s.Sequence, s.CollectedAt, s.Version, s.Requests, s.Errors, s.TotalLatencyMS, int64(s.MemoryBytes))
-		if err != nil {
-			failure(w, err)
-			return
-		}
-		count, err := result.RowsAffected()
-		if err != nil {
-			failure(w, err)
-			return
-		}
-		inserted += count
-		if count > 0 {
-			_, err = tx.ExecContext(ctx, `UPDATE nodes SET version=$2,latest_collected_at=$3 WHERE id=$1 AND latest_collected_at < $3`, s.NodeID, s.Version, s.CollectedAt)
-			if err != nil {
-				failure(w, err)
-				return
-			}
 		}
 	}
+	// One set-based statement instead of one round trip per sample. RETURNING
+	// lists only rows that were new, so retried identities are excluded.
+	phase = time.Now()
+	insertedIDs, err := insertSamples(ctx, tx, samples)
+	timer.statement += time.Since(phase)
+	timer.statements++
+	if err != nil {
+		failure(w, err)
+		return
+	}
+	for _, s := range latestInserted(samples, insertedIDs) {
+		// Delayed samples must not overwrite metadata from newer observations.
+		if _, err := exec(`UPDATE nodes SET version=$2,latest_collected_at=$3 WHERE id=$1 AND latest_collected_at < $3`, s.NodeID, s.Version, s.CollectedAt); err != nil {
+			failure(w, err)
+			return
+		}
+	}
+	inserted := int64(len(insertedIDs))
+	phase = time.Now()
 	if err := tx.Commit(); err != nil {
 		failure(w, err)
 		return
 	}
+	timer.commit = time.Since(phase)
 	respond(w, 202, map[string]int64{"inserted": inserted})
+	timer.finish(len(batch.Samples))
 }
 
 func (a API) nodes(w http.ResponseWriter, r *http.Request) {
@@ -148,7 +171,7 @@ func (a API) metrics(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
-	rows, err := a.DB.QueryContext(ctx, `SELECT node_id,session_id,sequence,collected_at,received_at,version,requests,errors,total_latency_ms,memory_bytes FROM samples WHERE node_id=$1 AND collected_at >= $2 AND collected_at < $3 ORDER BY collected_at,session_id,sequence LIMIT $4`, r.PathValue("id"), from, to, limit)
+	rows, err := a.DB.QueryContext(ctx, `SELECT node_id,session_id,sequence,collected_at,received_at,version,requests,errors,total_latency_ms,memory_bytes,app_process_id FROM samples WHERE node_id=$1 AND collected_at >= $2 AND collected_at < $3 ORDER BY collected_at,session_id,sequence LIMIT $4`, r.PathValue("id"), from, to, limit)
 	if err != nil {
 		failure(w, err)
 		return
@@ -161,7 +184,7 @@ func (a API) metrics(w http.ResponseWriter, r *http.Request) {
 	samples := []stored{}
 	for rows.Next() {
 		var s stored
-		if err := rows.Scan(&s.NodeID, &s.SessionID, &s.Sequence, &s.CollectedAt, &s.ReceivedAt, &s.Version, &s.Requests, &s.Errors, &s.TotalLatencyMS, &s.MemoryBytes); err != nil {
+		if err := rows.Scan(&s.NodeID, &s.SessionID, &s.Sequence, &s.CollectedAt, &s.ReceivedAt, &s.Version, &s.Requests, &s.Errors, &s.TotalLatencyMS, &s.MemoryBytes, &s.AppProcessID); err != nil {
 			failure(w, err)
 			return
 		}

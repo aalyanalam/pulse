@@ -1,0 +1,58 @@
+--- a/internal/backend/backend.go
++++ b/internal/backend/backend.go
+@@ -86,37 +86,32 @@
+ 		timer.statements++
+ 		return result, err
+ 	}
+-	samples := firstOccurrences(batch.Samples)
+-	// Create each distinct node once, from its first sample in batch order.
+-	created := make(map[string]bool)
+-	for _, s := range samples {
+-		if created[s.NodeID] {
+-			continue
++	var inserted int64
++	for _, s := range batch.Samples {
++		_, err = exec(`INSERT INTO nodes(id,version,latest_collected_at) VALUES($1,$2,$3) ON CONFLICT(id) DO NOTHING`, s.NodeID, s.Version, s.CollectedAt)
++		if err != nil {
++			failure(w, err)
++			return
+ 		}
+-		created[s.NodeID] = true
+-		if _, err := exec(`INSERT INTO nodes(id,version,latest_collected_at) VALUES($1,$2,$3) ON CONFLICT(id) DO NOTHING`, s.NodeID, s.Version, s.CollectedAt); err != nil {
++		result, err := exec(`INSERT INTO samples(node_id,session_id,sequence,collected_at,version,requests,errors,total_latency_ms,memory_bytes,app_process_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT(node_id,session_id,sequence) DO NOTHING`, s.NodeID, s.SessionID, s.Sequence, s.CollectedAt, s.Version, s.Requests, s.Errors, s.TotalLatencyMS, int64(s.MemoryBytes), s.AppProcessID)
++		if err != nil {
+ 			failure(w, err)
+ 			return
+ 		}
+-	}
+-	// One set-based statement instead of one round trip per sample. RETURNING
+-	// lists only rows that were new, so retried identities are excluded.
+-	phase = time.Now()
+-	insertedIDs, err := insertSamples(ctx, tx, samples)
+-	timer.statement += time.Since(phase)
+-	timer.statements++
+-	if err != nil {
+-		failure(w, err)
+-		return
+-	}
+-	for _, s := range latestInserted(samples, insertedIDs) {
+-		// Delayed samples must not overwrite metadata from newer observations.
+-		if _, err := exec(`UPDATE nodes SET version=$2,latest_collected_at=$3 WHERE id=$1 AND latest_collected_at < $3`, s.NodeID, s.Version, s.CollectedAt); err != nil {
++		count, err := result.RowsAffected()
++		if err != nil {
+ 			failure(w, err)
+ 			return
+ 		}
++		inserted += count
++		if count > 0 {
++			_, err = exec(`UPDATE nodes SET version=$2,latest_collected_at=$3 WHERE id=$1 AND latest_collected_at < $3`, s.NodeID, s.Version, s.CollectedAt)
++			if err != nil {
++				failure(w, err)
++				return
++			}
++		}
+ 	}
+-	inserted := int64(len(insertedIDs))
+ 	phase = time.Now()
+ 	if err := tx.Commit(); err != nil {
+ 		failure(w, err)

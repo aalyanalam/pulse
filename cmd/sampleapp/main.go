@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -19,10 +20,31 @@ import (
 
 func handler(version string) http.Handler {
 	var mu sync.Mutex
-	stats := telemetry.Stats{Version: version}
+	var id [16]byte
+	if _, err := rand.Read(id[:]); err != nil {
+		panic(err)
+	}
+	var started int64
+	stats := telemetry.Stats{Version: version, AppProcessID: fmt.Sprintf("%x", id)}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /work", func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
+		mu.Lock()
+		started++
+		fail := version == "v2-errors" && started%3 == 0
+		mu.Unlock()
+		if version == "v2-slow" {
+			timer := time.NewTimer(200 * time.Millisecond)
+			select {
+			case <-timer.C:
+			case <-r.Context().Done():
+				timer.Stop()
+				return
+			}
+		}
+		if fail {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 		value := []byte("pulse")
 		for i := 0; i < 1000; i++ {
 			sum := sha256.Sum256(value)
@@ -31,7 +53,7 @@ func handler(version string) http.Handler {
 		_, err := fmt.Fprintf(w, "%x\n", value)
 		mu.Lock()
 		stats.Requests++
-		if err != nil {
+		if err != nil || fail {
 			stats.Errors++
 		}
 		stats.TotalLatencyMS += float64(time.Since(start).Nanoseconds()) / 1e6

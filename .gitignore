@@ -11,3 +11,7 @@
 bin/
 *.exe
 coverage.out
+web/node_modules/
+web/dist/
+.pytest_cache/
+__pycache__/

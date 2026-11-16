@@ -1,0 +1,1117 @@
+{
+  "created_at": "2026-11-16T02:18:02.449725+00:00",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "logical_cpus": 8,
+  "python": "3.14.0",
+  "docker": {
+    "NCPU": 8,
+    "MemTotal": 16623751168,
+    "ServerVersion": "29.9.2",
+    "OperatingSystem": "Docker Desktop"
+  },
+  "configuration": {
+    "concurrency": [
+      0,
+      16,
+      64,
+      128
+    ],
+    "repeats": 2,
+    "batch_size": 32,
+    "warmup": 10,
+    "steady": 15,
+    "timeout": 60,
+    "output": "benchmarks/fault-load.json"
+  },
+  "backend_image": "pulse-backend sha256:977dfe93dd96884add68fb72ba1e795c7d66e425756acae30334672cd5cd40c0",
+  "runs": [
+    {
+      "concurrency": 0,
+      "background": {
+        "concurrency": 0,
+        "seconds": 142.24978409986943,
+        "samples_per_second": 0,
+        "requests": 0,
+        "failed_requests": 0,
+        "p95_ms": null,
+        "p99_ms": null
+      },
+      "scenarios": [
+        {
+          "scenario": "slow release",
+          "kind": "slow_responses",
+          "fault_in_place_at": "2026-11-16T02:18:34.924617+00:00",
+          "detected": true,
+          "detection_seconds": 14.018762199906632,
+          "incident": {
+            "version": "v2-slow",
+            "id": 2695,
+            "kind": "slow_responses",
+            "opened_at": "2026-11-16T02:18:48.680307Z",
+            "resolved_at": null
+          },
+          "first_faulty_sample_at": "2026-11-16T02:18:31.882591+00:00",
+          "first_sample_to_opened_seconds": 16.797716,
+          "recovered": true,
+          "recovery_seconds": 13.13855449995026
+        },
+        {
+          "scenario": "error release",
+          "kind": "elevated_errors",
+          "fault_in_place_at": "2026-11-16T02:19:11.230575+00:00",
+          "detected": true,
+          "detection_seconds": 13.622187600005418,
+          "incident": {
+            "version": "v2-errors",
+            "id": 2735,
+            "kind": "elevated_errors",
+            "opened_at": "2026-11-16T02:19:24.678055Z",
+            "resolved_at": null
+          },
+          "first_faulty_sample_at": "2026-11-16T02:19:10.881836+00:00",
+          "first_sample_to_opened_seconds": 13.796219,
+          "recovered": true,
+          "recovery_seconds": 13.110865699825808
+        },
+        {
+          "scenario": "application stopped",
+          "kind": "application_unavailable",
+          "fault_in_place_at": "2026-11-16T02:19:44.092050+00:00",
+          "detected": true,
+          "detection_seconds": 6.868218299932778,
+          "incident": {
+            "version": "",
+            "id": 2765,
+            "kind": "application_unavailable",
+            "opened_at": "2026-11-16T02:19:50.885182Z",
+            "resolved_at": null
+          },
+          "recovered": true,
+          "recovery_seconds": 7.270208900095895
+        },
+        {
+          "scenario": "agent stopped",
+          "kind": "agent_unreachable",
+          "fault_in_place_at": "2026-11-16T02:20:00.384218+00:00",
+          "detected": true,
+          "detection_seconds": 14.421465599909425,
+          "incident": {
+            "version": "",
+            "id": 2788,
+            "kind": "agent_unreachable",
+            "opened_at": "2026-11-16T02:20:13.877709Z",
+            "resolved_at": null
+          },
+          "recovered": true,
+          "recovery_seconds": 5.930837899912149
+        }
+      ],
+      "unexpected_incidents": [],
+      "agent": {
+        "log_events": {
+          "retries": 0,
+          "queue_drops": 0,
+          "rejected_batches": 0,
+          "invalid_samples": 0,
+          "heartbeat_failures": 0,
+          "collection_failures": 3
+        },
+        "shutdown_totals": [
+          {
+            "retries": 0,
+            "dropped_samples": 0
+          }
+        ],
+        "sessions": [
+          {
+            "session_id": "ca394dbb8553275b079e9e9f024d9d69",
+            "stored": 4,
+            "first": 1,
+            "last": 4,
+            "delay_p50": 3.0087835,
+            "delay_p95": 3.0108612,
+            "delay_max": 3.010893
+          },
+          {
+            "session_id": "ee09295292973f7a6a5029d1e740b1cc",
+            "stored": 32,
+            "first": 15,
+            "last": 46,
+            "delay_p50": 3.0071005,
+            "delay_p95": 3.01936485,
+            "delay_max": 6.01098
+          }
+        ],
+        "expected_samples": 36,
+        "stored_samples": 36,
+        "sequence_gaps": 0,
+        "delivery_delay_seconds": {
+          "p50_max_over_sessions": 3.0087835,
+          "p95_max_over_sessions": 3.01936485,
+          "max": 6.01098
+        }
+      },
+      "backend_pool": {
+        "waits": 0,
+        "wait_seconds": 0.0
+      },
+      "window": [
+        "2026-11-16T02:18:15.773955+00:00",
+        "2026-11-16T02:20:28.020765+00:00"
+      ],
+      "repeat": 1
+    },
+    {
+      "concurrency": 16,
+      "background": {
+        "concurrency": 16,
+        "seconds": 150.60685750003904,
+        "samples_per_second": 7754.441061886556,
+        "requests": 36496,
+        "failed_requests": 0,
+        "p95_ms": 103.45249995589256,
+        "p99_ms": 130.3715999238193
+      },
+      "scenarios": [
+        {
+          "scenario": "slow release",
+          "kind": "slow_responses",
+          "fault_in_place_at": "2026-11-16T02:21:05.512609+00:00",
+          "detected": true,
+          "detection_seconds": 13.393610699800774,
+          "incident": {
+            "version": "v2-slow",
+            "id": 2856,
+            "kind": "slow_responses",
+            "opened_at": "2026-11-16T02:21:18.698259Z",
+            "resolved_at": null
+          },
+          "first_faulty_sample_at": "2026-11-16T02:21:01.814506+00:00",
+          "first_sample_to_opened_seconds": 16.883753,
+          "recovered": true,
+          "recovery_seconds": 12.568265200126916
+        },
+        {
+          "scenario": "error release",
+          "kind": "elevated_errors",
+          "fault_in_place_at": "2026-11-16T02:21:45.428757+00:00",
+          "detected": true,
+          "detection_seconds": 9.525612799916416,
+          "incident": {
+            "version": "v2-errors",
+            "id": 2898,
+            "kind": "elevated_errors",
+            "opened_at": "2026-11-16T02:21:54.678084Z",
+            "resolved_at": null
+          },
+          "first_faulty_sample_at": "2026-11-16T02:21:40.816123+00:00",
+          "first_sample_to_opened_seconds": 13.861961,
+          "recovered": true,
+          "recovery_seconds": 12.0396426001098
+        },
+        {
+          "scenario": "application stopped",
+          "kind": "application_unavailable",
+          "fault_in_place_at": "2026-11-16T02:22:16.586301+00:00",
+          "detected": true,
+          "detection_seconds": 7.338490399997681,
+          "incident": {
+            "version": "",
+            "id": 2932,
+            "kind": "application_unavailable",
+            "opened_at": "2026-11-16T02:22:23.820902Z",
+            "resolved_at": null
+          },
+          "recovered": true,
+          "recovery_seconds": 9.232318399939686
+        },
+        {
+          "scenario": "agent stopped",
+          "kind": "agent_unreachable",
+          "fault_in_place_at": "2026-11-16T02:22:36.699963+00:00",
+          "detected": true,
+          "detection_seconds": 14.00768189993687,
+          "incident": {
+            "version": "",
+            "id": 2961,
+            "kind": "agent_unreachable",
+            "opened_at": "2026-11-16T02:22:49.836273Z",
+            "resolved_at": null
+          },
+          "recovered": true,
+          "recovery_seconds": 6.063512000022456
+        }
+      ],
+      "unexpected_incidents": [],
+      "agent": {
+        "log_events": {
+          "retries": 0,
+          "queue_drops": 0,
+          "rejected_batches": 0,
+          "invalid_samples": 0,
+          "heartbeat_failures": 0,
+          "collection_failures": 4
+        },
+        "shutdown_totals": [
+          {
+            "retries": 0,
+            "dropped_samples": 0
+          }
+        ],
+        "sessions": [
+          {
+            "session_id": "93b2aab4853b1ce51f6ea0d3717cb1a3",
+            "stored": 4,
+            "first": 1,
+            "last": 4,
+            "delay_p50": 3.0108375,
+            "delay_p95": 3.0372143,
+            "delay_max": 3.040367
+          },
+          {
+            "session_id": "ca394dbb8553275b079e9e9f024d9d69",
+            "stored": 33,
+            "first": 11,
+            "last": 43,
+            "delay_p50": 3.02282,
+            "delay_p95": 4.245078599999996,
+            "delay_max": 6.023352
+          }
+        ],
+        "expected_samples": 37,
+        "stored_samples": 37,
+        "sequence_gaps": 0,
+        "delivery_delay_seconds": {
+          "p50_max_over_sessions": 3.02282,
+          "p95_max_over_sessions": 4.245078599999996,
+          "max": 6.023352
+        }
+      },
+      "backend_pool": {
+        "waits": 31822,
+        "wait_seconds": 357.714396054
+      },
+      "window": [
+        "2026-11-16T02:20:44.160752+00:00",
+        "2026-11-16T02:23:04.681266+00:00"
+      ],
+      "repeat": 1
+    },
+    {
+      "concurrency": 64,
+      "background": {
+        "concurrency": 64,
+        "seconds": 154.41113690007478,
+        "samples_per_second": 7343.71900087636,
+        "requests": 35436,
+        "failed_requests": 0,
+        "p95_ms": 718.8322998117656,
+        "p99_ms": 1097.232999978587
+      },
+      "scenarios": [
+        {
+          "scenario": "slow release",
+          "kind": "slow_responses",
+          "fault_in_place_at": "2026-11-16T02:23:43.258511+00:00",
+          "detected": true,
+          "detection_seconds": 11.820161000126973,
+          "incident": {
+            "version": "v2-slow",
+            "id": 3028,
+            "kind": "slow_responses",
+            "opened_at": "2026-11-16T02:23:54.649987Z",
+            "resolved_at": null
+          },
+          "first_faulty_sample_at": "2026-11-16T02:23:41.358223+00:00",
+          "first_sample_to_opened_seconds": 13.291764,
+          "recovered": true,
+          "recovery_seconds": 11.951500599971041
+        },
+        {
+          "scenario": "error release",
+          "kind": "elevated_errors",
+          "fault_in_place_at": "2026-11-16T02:24:21.718528+00:00",
+          "detected": true,
+          "detection_seconds": 13.297881700098515,
+          "incident": {
+            "version": "v2-errors",
+            "id": 3074,
+            "kind": "elevated_errors",
+            "opened_at": "2026-11-16T02:24:34.781146Z",
+            "resolved_at": null
+          },
+          "first_faulty_sample_at": "2026-11-16T02:24:17.342853+00:00",
+          "first_sample_to_opened_seconds": 17.438293,
+          "recovered": true,
+          "recovery_seconds": 11.715791000053287
+        },
+        {
+          "scenario": "application stopped",
+          "kind": "application_unavailable",
+          "fault_in_place_at": "2026-11-16T02:24:56.722288+00:00",
+          "detected": true,
+          "detection_seconds": 7.068552300101146,
+          "incident": {
+            "version": "",
+            "id": 3107,
+            "kind": "application_unavailable",
+            "opened_at": "2026-11-16T02:25:03.371346Z",
+            "resolved_at": null
+          },
+          "recovered": true,
+          "recovery_seconds": 8.980725600151345
+        },
+        {
+          "scenario": "agent stopped",
+          "kind": "agent_unreachable",
+          "fault_in_place_at": "2026-11-16T02:25:16.503098+00:00",
+          "detected": true,
+          "detection_seconds": 14.385721599915996,
+          "incident": {
+            "version": "",
+            "id": 3135,
+            "kind": "agent_unreachable",
+            "opened_at": "2026-11-16T02:25:29.360987Z",
+            "resolved_at": null
+          },
+          "recovered": true,
+          "recovery_seconds": 6.418933700071648
+        }
+      ],
+      "unexpected_incidents": [],
+      "agent": {
+        "log_events": {
+          "retries": 0,
+          "queue_drops": 0,
+          "rejected_batches": 0,
+          "invalid_samples": 0,
+          "heartbeat_failures": 0,
+          "collection_failures": 5
+        },
+        "shutdown_totals": [
+          {
+            "retries": 0,
+            "dropped_samples": 0
+          }
+        ],
+        "sessions": [
+          {
+            "session_id": "252b442b4d294c22b8ffd5ed785328f1",
+            "stored": 4,
+            "first": 1,
+            "last": 4,
+            "delay_p50": 3.131688,
+            "delay_p95": 3.5718197,
+            "delay_max": 3.645752
+          },
+          {
+            "session_id": "93b2aab4853b1ce51f6ea0d3717cb1a3",
+            "stored": 32,
+            "first": 11,
+            "last": 42,
+            "delay_p50": 3.2082,
+            "delay_p95": 4.7323144999999975,
+            "delay_max": 6.169259
+          }
+        ],
+        "expected_samples": 36,
+        "stored_samples": 36,
+        "sequence_gaps": 0,
+        "delivery_delay_seconds": {
+          "p50_max_over_sessions": 3.2082,
+          "p95_max_over_sessions": 4.7323144999999975,
+          "max": 6.169259
+        }
+      },
+      "backend_pool": {
+        "waits": 35924,
+        "wait_seconds": 7837.52223899
+      },
+      "window": [
+        "2026-11-16T02:23:21.032014+00:00",
+        "2026-11-16T02:25:45.118806+00:00"
+      ],
+      "repeat": 1
+    },
+    {
+      "concurrency": 128,
+      "background": {
+        "concurrency": 128,
+        "seconds": 159.02541570016183,
+        "samples_per_second": 7609.953381802532,
+        "requests": 37820,
+        "failed_requests": 2,
+        "p95_ms": 1490.5698001384735,
+        "p99_ms": 2279.9297000747174
+      },
+      "scenarios": [
+        {
+          "scenario": "slow release",
+          "kind": "slow_responses",
+          "fault_in_place_at": "2026-11-16T02:26:25.239228+00:00",
+          "detected": true,
+          "detection_seconds": 13.297963100019842,
+          "incident": {
+            "version": "v2-slow",
+            "id": 3205,
+            "kind": "slow_responses",
+            "opened_at": "2026-11-16T02:26:36.827579Z",
+            "resolved_at": null
+          },
+          "first_faulty_sample_at": "2026-11-16T02:26:21.434535+00:00",
+          "first_sample_to_opened_seconds": 15.393044,
+          "recovered": true,
+          "recovery_seconds": 13.536889400100335
+        },
+        {
+          "scenario": "error release",
+          "kind": "elevated_errors",
+          "fault_in_place_at": "2026-11-16T02:27:08.759944+00:00",
+          "detected": true,
+          "detection_seconds": 9.535534699913114,
+          "incident": {
+            "version": "v2-errors",
+            "id": 3252,
+            "kind": "elevated_errors",
+            "opened_at": "2026-11-16T02:27:16.994601Z",
+            "resolved_at": null
+          },
+          "first_faulty_sample_at": "2026-11-16T02:27:06.430808+00:00",
+          "first_sample_to_opened_seconds": 10.563793,
+          "recovered": true,
+          "recovery_seconds": 12.194596800021827
+        },
+        {
+          "scenario": "application stopped",
+          "kind": "application_unavailable",
+          "fault_in_place_at": "2026-11-16T02:27:40.052913+00:00",
+          "detected": true,
+          "detection_seconds": 7.259540299884975,
+          "incident": {
+            "version": "",
+            "id": 3286,
+            "kind": "application_unavailable",
+            "opened_at": "2026-11-16T02:27:46.741813Z",
+            "resolved_at": null
+          },
+          "recovered": true,
+          "recovery_seconds": 9.516065099975094
+        },
+        {
+          "scenario": "agent stopped",
+          "kind": "agent_unreachable",
+          "fault_in_place_at": "2026-11-16T02:28:01.520186+00:00",
+          "detected": true,
+          "detection_seconds": 14.809701800113544,
+          "incident": {
+            "version": "",
+            "id": 3316,
+            "kind": "agent_unreachable",
+            "opened_at": "2026-11-16T02:28:13.568568Z",
+            "resolved_at": null
+          },
+          "recovered": true,
+          "recovery_seconds": 6.091865200083703
+        }
+      ],
+      "unexpected_incidents": [],
+      "agent": {
+        "log_events": {
+          "retries": 0,
+          "queue_drops": 0,
+          "rejected_batches": 0,
+          "invalid_samples": 0,
+          "heartbeat_failures": 0,
+          "collection_failures": 5
+        },
+        "shutdown_totals": [
+          {
+            "retries": 0,
+            "dropped_samples": 0
+          }
+        ],
+        "sessions": [
+          {
+            "session_id": "252b442b4d294c22b8ffd5ed785328f1",
+            "stored": 34,
+            "first": 11,
+            "last": 44,
+            "delay_p50": 3.3092344999999996,
+            "delay_p95": 5.559989149999997,
+            "delay_max": 6.444322
+          },
+          {
+            "session_id": "fe254af2c5cf8af046f3ff1f13bcdad2",
+            "stored": 4,
+            "first": 1,
+            "last": 4,
+            "delay_p50": 3.124771,
+            "delay_p95": 4.187480449999999,
+            "delay_max": 4.363337
+          }
+        ],
+        "expected_samples": 38,
+        "stored_samples": 38,
+        "sequence_gaps": 0,
+        "delivery_delay_seconds": {
+          "p50_max_over_sessions": 3.3092344999999996,
+          "p95_max_over_sessions": 5.559989149999997,
+          "max": 6.444322
+        }
+      },
+      "backend_pool": {
+        "waits": 38237,
+        "wait_seconds": 18305.362359448
+      },
+      "window": [
+        "2026-11-16T02:26:01.916485+00:00",
+        "2026-11-16T02:28:30.206595+00:00"
+      ],
+      "repeat": 1
+    },
+    {
+      "concurrency": 128,
+      "background": {
+        "concurrency": 128,
+        "seconds": 156.85592320002615,
+        "samples_per_second": 7426.126959289771,
+        "requests": 36404,
+        "failed_requests": 3,
+        "p95_ms": 1557.768699945882,
+        "p99_ms": 2398.3048000372946
+      },
+      "scenarios": [
+        {
+          "scenario": "slow release",
+          "kind": "slow_responses",
+          "fault_in_place_at": "2026-11-16T02:29:09.051066+00:00",
+          "detected": true,
+          "detection_seconds": 12.277464799815789,
+          "incident": {
+            "version": "v2-slow",
+            "id": 3386,
+            "kind": "slow_responses",
+            "opened_at": "2026-11-16T02:29:20.82268Z",
+            "resolved_at": null
+          },
+          "first_faulty_sample_at": "2026-11-16T02:29:06.851711+00:00",
+          "first_sample_to_opened_seconds": 13.970969,
+          "recovered": true,
+          "recovery_seconds": 11.897953700041398
+        },
+        {
+          "scenario": "error release",
+          "kind": "elevated_errors",
+          "fault_in_place_at": "2026-11-16T02:29:48.996454+00:00",
+          "detected": true,
+          "detection_seconds": 10.167862499831244,
+          "incident": {
+            "version": "v2-errors",
+            "id": 3429,
+            "kind": "elevated_errors",
+            "opened_at": "2026-11-16T02:29:58.607789Z",
+            "resolved_at": null
+          },
+          "first_faulty_sample_at": "2026-11-16T02:29:48.834219+00:00",
+          "first_sample_to_opened_seconds": 9.77357,
+          "recovered": true,
+          "recovery_seconds": 15.204757299972698
+        },
+        {
+          "scenario": "application stopped",
+          "kind": "application_unavailable",
+          "fault_in_place_at": "2026-11-16T02:30:25.471815+00:00",
+          "detected": true,
+          "detection_seconds": 6.740146300056949,
+          "incident": {
+            "version": "",
+            "id": 3467,
+            "kind": "application_unavailable",
+            "opened_at": "2026-11-16T02:30:31.930071Z",
+            "resolved_at": null
+          },
+          "recovered": true,
+          "recovery_seconds": 10.847998999990523
+        },
+        {
+          "scenario": "agent stopped",
+          "kind": "agent_unreachable",
+          "fault_in_place_at": "2026-11-16T02:30:46.624375+00:00",
+          "detected": true,
+          "detection_seconds": 12.438959199935198,
+          "incident": {
+            "version": "",
+            "id": 3496,
+            "kind": "agent_unreachable",
+            "opened_at": "2026-11-16T02:30:58.477319Z",
+            "resolved_at": null
+          },
+          "recovered": true,
+          "recovery_seconds": 6.406146900029853
+        }
+      ],
+      "unexpected_incidents": [],
+      "agent": {
+        "log_events": {
+          "retries": 0,
+          "queue_drops": 0,
+          "rejected_batches": 0,
+          "invalid_samples": 0,
+          "heartbeat_failures": 0,
+          "collection_failures": 6
+        },
+        "shutdown_totals": [
+          {
+            "retries": 0,
+            "dropped_samples": 0
+          }
+        ],
+        "sessions": [
+          {
+            "session_id": "24f547f5c937138e8702342f65d0fb0b",
+            "stored": 4,
+            "first": 1,
+            "last": 4,
+            "delay_p50": 3.1126240000000003,
+            "delay_p95": 3.38874475,
+            "delay_max": 3.424285
+          },
+          {
+            "session_id": "fe254af2c5cf8af046f3ff1f13bcdad2",
+            "stored": 33,
+            "first": 11,
+            "last": 43,
+            "delay_p50": 3.374526,
+            "delay_p95": 4.84955,
+            "delay_max": 6.051572
+          }
+        ],
+        "expected_samples": 37,
+        "stored_samples": 37,
+        "sequence_gaps": 0,
+        "delivery_delay_seconds": {
+          "p50_max_over_sessions": 3.374526,
+          "p95_max_over_sessions": 4.84955,
+          "max": 6.051572
+        }
+      },
+      "backend_pool": {
+        "waits": 36825,
+        "wait_seconds": 18070.440642304
+      },
+      "window": [
+        "2026-11-16T02:28:47.002989+00:00",
+        "2026-11-16T02:31:13.231603+00:00"
+      ],
+      "repeat": 2
+    },
+    {
+      "concurrency": 64,
+      "background": {
+        "concurrency": 64,
+        "seconds": 157.93686160002835,
+        "samples_per_second": 7636.469331994017,
+        "requests": 37690,
+        "failed_requests": 0,
+        "p95_ms": 687.0538999792188,
+        "p99_ms": 1047.547599999234
+      },
+      "scenarios": [
+        {
+          "scenario": "slow release",
+          "kind": "slow_responses",
+          "fault_in_place_at": "2026-11-16T02:31:52.651419+00:00",
+          "detected": true,
+          "detection_seconds": 10.293477199971676,
+          "incident": {
+            "version": "v2-slow",
+            "id": 3564,
+            "kind": "slow_responses",
+            "opened_at": "2026-11-16T02:32:02.748562Z",
+            "resolved_at": null
+          },
+          "first_faulty_sample_at": "2026-11-16T02:31:52.560194+00:00",
+          "first_sample_to_opened_seconds": 10.188368,
+          "recovered": true,
+          "recovery_seconds": 14.348347200080752
+        },
+        {
+          "scenario": "error release",
+          "kind": "elevated_errors",
+          "fault_in_place_at": "2026-11-16T02:32:32.098127+00:00",
+          "detected": true,
+          "detection_seconds": 12.519152899971232,
+          "incident": {
+            "version": "v2-errors",
+            "id": 3612,
+            "kind": "elevated_errors",
+            "opened_at": "2026-11-16T02:32:44.574962Z",
+            "resolved_at": null
+          },
+          "first_faulty_sample_at": "2026-11-16T02:32:28.553977+00:00",
+          "first_sample_to_opened_seconds": 16.020985,
+          "recovered": true,
+          "recovery_seconds": 12.506714799907058
+        },
+        {
+          "scenario": "application stopped",
+          "kind": "application_unavailable",
+          "fault_in_place_at": "2026-11-16T02:33:07.082733+00:00",
+          "detected": true,
+          "detection_seconds": 7.815187799977139,
+          "incident": {
+            "version": "",
+            "id": 3648,
+            "kind": "application_unavailable",
+            "opened_at": "2026-11-16T02:33:14.630662Z",
+            "resolved_at": null
+          },
+          "recovered": true,
+          "recovery_seconds": 9.277592100203037
+        },
+        {
+          "scenario": "agent stopped",
+          "kind": "agent_unreachable",
+          "fault_in_place_at": "2026-11-16T02:33:27.989640+00:00",
+          "detected": true,
+          "detection_seconds": 15.07697459985502,
+          "incident": {
+            "version": "",
+            "id": 3676,
+            "kind": "agent_unreachable",
+            "opened_at": "2026-11-16T02:33:40.612333Z",
+            "resolved_at": null
+          },
+          "recovered": true,
+          "recovery_seconds": 6.487156599992886
+        }
+      ],
+      "unexpected_incidents": [],
+      "agent": {
+        "log_events": {
+          "retries": 0,
+          "queue_drops": 0,
+          "rejected_batches": 0,
+          "invalid_samples": 0,
+          "heartbeat_failures": 0,
+          "collection_failures": 6
+        },
+        "shutdown_totals": [
+          {
+            "retries": 0,
+            "dropped_samples": 0
+          }
+        ],
+        "sessions": [
+          {
+            "session_id": "24f547f5c937138e8702342f65d0fb0b",
+            "stored": 33,
+            "first": 11,
+            "last": 43,
+            "delay_p50": 3.162246,
+            "delay_p95": 4.0457756,
+            "delay_max": 6.11387
+          },
+          {
+            "session_id": "c56aaf4b907bc5886ec8561c326e9422",
+            "stored": 4,
+            "first": 1,
+            "last": 4,
+            "delay_p50": 3.1940465,
+            "delay_p95": 3.3374693,
+            "delay_max": 3.341741
+          }
+        ],
+        "expected_samples": 37,
+        "stored_samples": 37,
+        "sequence_gaps": 0,
+        "delivery_delay_seconds": {
+          "p50_max_over_sessions": 3.1940465,
+          "p95_max_over_sessions": 4.0457756,
+          "max": 6.11387
+        }
+      },
+      "backend_pool": {
+        "waits": 38185,
+        "wait_seconds": 8010.405767416
+      },
+      "window": [
+        "2026-11-16T02:31:29.740285+00:00",
+        "2026-11-16T02:33:57.273359+00:00"
+      ],
+      "repeat": 2
+    },
+    {
+      "concurrency": 16,
+      "background": {
+        "concurrency": 16,
+        "seconds": 153.11957590002567,
+        "samples_per_second": 7123.321714998409,
+        "requests": 34085,
+        "failed_requests": 0,
+        "p95_ms": 110.82499986514449,
+        "p99_ms": 144.93379998020828
+      },
+      "scenarios": [
+        {
+          "scenario": "slow release",
+          "kind": "slow_responses",
+          "fault_in_place_at": "2026-11-16T02:34:35.498520+00:00",
+          "detected": true,
+          "detection_seconds": 11.048678699880838,
+          "incident": {
+            "version": "v2-slow",
+            "id": 3744,
+            "kind": "slow_responses",
+            "opened_at": "2026-11-16T02:34:46.506807Z",
+            "resolved_at": null
+          },
+          "first_faulty_sample_at": "2026-11-16T02:34:33.516722+00:00",
+          "first_sample_to_opened_seconds": 12.990085,
+          "recovered": true,
+          "recovery_seconds": 13.875469099963084
+        },
+        {
+          "scenario": "error release",
+          "kind": "elevated_errors",
+          "fault_in_place_at": "2026-11-16T02:35:15.234688+00:00",
+          "detected": true,
+          "detection_seconds": 11.327738699968904,
+          "incident": {
+            "version": "v2-errors",
+            "id": 3790,
+            "kind": "elevated_errors",
+            "opened_at": "2026-11-16T02:35:26.491833Z",
+            "resolved_at": null
+          },
+          "first_faulty_sample_at": "2026-11-16T02:35:12.508488+00:00",
+          "first_sample_to_opened_seconds": 13.983345,
+          "recovered": true,
+          "recovery_seconds": 11.970640000188723
+        },
+        {
+          "scenario": "application stopped",
+          "kind": "application_unavailable",
+          "fault_in_place_at": "2026-11-16T02:35:48.418358+00:00",
+          "detected": true,
+          "detection_seconds": 7.120575499953702,
+          "incident": {
+            "version": "",
+            "id": 3824,
+            "kind": "application_unavailable",
+            "opened_at": "2026-11-16T02:35:55.519015Z",
+            "resolved_at": null
+          },
+          "recovered": true,
+          "recovery_seconds": 9.546015999978408
+        },
+        {
+          "scenario": "agent stopped",
+          "kind": "agent_unreachable",
+          "fault_in_place_at": "2026-11-16T02:36:08.425657+00:00",
+          "detected": true,
+          "detection_seconds": 14.278711100108922,
+          "incident": {
+            "version": "",
+            "id": 3852,
+            "kind": "agent_unreachable",
+            "opened_at": "2026-11-16T02:36:21.566584Z",
+            "resolved_at": null
+          },
+          "recovered": true,
+          "recovery_seconds": 6.05751600000076
+        }
+      ],
+      "unexpected_incidents": [],
+      "agent": {
+        "log_events": {
+          "retries": 0,
+          "queue_drops": 0,
+          "rejected_batches": 0,
+          "invalid_samples": 0,
+          "heartbeat_failures": 0,
+          "collection_failures": 6
+        },
+        "shutdown_totals": [
+          {
+            "retries": 0,
+            "dropped_samples": 0
+          }
+        ],
+        "sessions": [
+          {
+            "session_id": "b2b8ead888ecd52fe15a8808d7374969",
+            "stored": 4,
+            "first": 1,
+            "last": 4,
+            "delay_p50": 3.0152615000000003,
+            "delay_p95": 3.0385193,
+            "delay_max": 3.041381
+          },
+          {
+            "session_id": "c56aaf4b907bc5886ec8561c326e9422",
+            "stored": 32,
+            "first": 11,
+            "last": 42,
+            "delay_p50": 3.025231,
+            "delay_p95": 3.06571625,
+            "delay_max": 3.076254
+          }
+        ],
+        "expected_samples": 36,
+        "stored_samples": 36,
+        "sequence_gaps": 0,
+        "delivery_delay_seconds": {
+          "p50_max_over_sessions": 3.025231,
+          "p95_max_over_sessions": 3.06571625,
+          "max": 3.076254
+        }
+      },
+      "backend_pool": {
+        "waits": 30072,
+        "wait_seconds": 370.069489599
+      },
+      "window": [
+        "2026-11-16T02:34:13.570897+00:00",
+        "2026-11-16T02:36:36.612834+00:00"
+      ],
+      "repeat": 2
+    },
+    {
+      "concurrency": 0,
+      "background": {
+        "concurrency": 0,
+        "seconds": 131.03650139993988,
+        "samples_per_second": 0,
+        "requests": 0,
+        "failed_requests": 0,
+        "p95_ms": null,
+        "p99_ms": null
+      },
+      "scenarios": [
+        {
+          "scenario": "slow release",
+          "kind": "slow_responses",
+          "fault_in_place_at": "2026-11-16T02:37:11.978681+00:00",
+          "detected": true,
+          "detection_seconds": 10.538565600058064,
+          "incident": {
+            "version": "v2-slow",
+            "id": 3916,
+            "kind": "slow_responses",
+            "opened_at": "2026-11-16T02:37:22.461456Z",
+            "resolved_at": null
+          },
+          "first_faulty_sample_at": "2026-11-16T02:37:10.285477+00:00",
+          "first_sample_to_opened_seconds": 12.175979,
+          "recovered": true,
+          "recovery_seconds": 11.480814800132066
+        },
+        {
+          "scenario": "error release",
+          "kind": "elevated_errors",
+          "fault_in_place_at": "2026-11-16T02:37:42.856721+00:00",
+          "detected": true,
+          "detection_seconds": 9.67385910009034,
+          "incident": {
+            "version": "v2-errors",
+            "id": 3949,
+            "kind": "elevated_errors",
+            "opened_at": "2026-11-16T02:37:52.466852Z",
+            "resolved_at": null
+          },
+          "first_faulty_sample_at": "2026-11-16T02:37:40.27834+00:00",
+          "first_sample_to_opened_seconds": 12.188512,
+          "recovered": true,
+          "recovery_seconds": 11.582942600129172
+        },
+        {
+          "scenario": "application stopped",
+          "kind": "application_unavailable",
+          "fault_in_place_at": "2026-11-16T02:38:09.800599+00:00",
+          "detected": true,
+          "detection_seconds": 7.482449299888685,
+          "incident": {
+            "version": "",
+            "id": 3976,
+            "kind": "application_unavailable",
+            "opened_at": "2026-11-16T02:38:17.272703Z",
+            "resolved_at": null
+          },
+          "recovered": true,
+          "recovery_seconds": 7.48274639993906
+        },
+        {
+          "scenario": "agent stopped",
+          "kind": "agent_unreachable",
+          "fault_in_place_at": "2026-11-16T02:38:26.612819+00:00",
+          "detected": true,
+          "detection_seconds": 13.960777499945834,
+          "incident": {
+            "version": "",
+            "id": 4000,
+            "kind": "agent_unreachable",
+            "opened_at": "2026-11-16T02:38:40.272195Z",
+            "resolved_at": null
+          },
+          "recovered": true,
+          "recovery_seconds": 5.756916800048202
+        }
+      ],
+      "unexpected_incidents": [],
+      "agent": {
+        "log_events": {
+          "retries": 0,
+          "queue_drops": 0,
+          "rejected_batches": 0,
+          "invalid_samples": 0,
+          "heartbeat_failures": 0,
+          "collection_failures": 2
+        },
+        "shutdown_totals": [
+          {
+            "retries": 0,
+            "dropped_samples": 0
+          }
+        ],
+        "sessions": [
+          {
+            "session_id": "8a987e8182c47e7a34abba62eab0ea31",
+            "stored": 4,
+            "first": 1,
+            "last": 4,
+            "delay_p50": 3.0065855,
+            "delay_p95": 3.01008125,
+            "delay_max": 3.010499
+          },
+          {
+            "session_id": "b2b8ead888ecd52fe15a8808d7374969",
+            "stored": 29,
+            "first": 11,
+            "last": 39,
+            "delay_p50": 3.007206,
+            "delay_p95": 3.0095418,
+            "delay_max": 3.010437
+          }
+        ],
+        "expected_samples": 33,
+        "stored_samples": 33,
+        "sequence_gaps": 0,
+        "delivery_delay_seconds": {
+          "p50_max_over_sessions": 3.007206,
+          "p95_max_over_sessions": 3.01008125,
+          "max": 3.010499
+        }
+      },
+      "backend_pool": {
+        "waits": 0,
+        "wait_seconds": 0.0
+      },
+      "window": [
+        "2026-11-16T02:36:52.586486+00:00",
+        "2026-11-16T02:38:53.621310+00:00"
+      ],
+      "repeat": 2
+    }
+  ]
+}
