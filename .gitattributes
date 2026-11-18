@@ -1,0 +1,5 @@
+# Leave the load-generation and benchmark harness out of GitHub's language
+# statistics so the bar reflects the system itself. Tests and the demo still count.
+scripts/load.py linguist-detectable=false
+scripts/fault_load.py linguist-detectable=false
+scripts/ab_benchmark.py linguist-detectable=false
