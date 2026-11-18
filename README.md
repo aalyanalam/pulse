@@ -8,7 +8,9 @@ Pulse is a telemetry and diagnostics platform that answers that question. Agents
 
 **Scope:** a local simulation. Each "node" is a small Go application plus a companion agent, run in Docker Compose. Faulty releases are built into the sample application: `v2-slow` adds about 200 ms per request, and `v2-errors` fails every third request. No physical hardware is monitored.
 
-![Node investigation: latency and error-rate charts with release markers and incident bands, and incidents with the evidence that opened them](docs/screenshots/node-details.png)
+**▶ [Watch the 3-minute demo](https://www.youtube.com/watch?v=XR1ry1PW4iI):** a faulty release is detected, compared against the healthy version, and rolled back.
+
+[![Node investigation: latency and error-rate charts with release markers and incident bands, and incidents with the evidence that opened them. Click to watch the demo video.](docs/screenshots/node-details.png)](https://www.youtube.com/watch?v=XR1ry1PW4iI)
 
 ## Quick start
 
