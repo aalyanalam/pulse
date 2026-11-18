@@ -1,11 +1,6 @@
 .tools/
-# Track portable vault settings, but keep device-specific state local.
-.obsidian/*
-!.obsidian/app.json
-!.obsidian/appearance.json
-!.obsidian/core-plugins.json
-!.obsidian/graph.json
-!.obsidian/hotkeys.json
+# Local Obsidian vault settings and trash.
+.obsidian/
 .trash/
 .env
 bin/
@@ -15,3 +10,9 @@ web/node_modules/
 web/dist/
 .pytest_cache/
 __pycache__/
+
+# Private working notes: kept locally in the vault, not published.
+HANDOFF.md
+AGENTS.md
+Pulse - Project Roadmap.md
+docs/DEMO-VIDEO.md

@@ -1,5 +1,5 @@
-/* Design tokens. Neutrals and the data color follow the validated reference
-   palette; status colors are reserved for meaning and always paired with an
+/* Design tokens. Neutrals and the data color were checked for contrast and
+   color-blind separation in both themes; status colors are reserved for meaning and always paired with an
    icon and a text label. Dark mode follows the operating system. */
 :root {
   color-scheme: light;

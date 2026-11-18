@@ -290,11 +290,3 @@ tests/          pytest fault scenarios and failure diagnostics
 benchmarks/     raw benchmark results and patches to rebuild earlier ingestion variants
 docs/           design notes and screenshots
 ```
-
-## Project notes
-
-This repository is also an Obsidian vault.
-
-- [Pulse - Project Roadmap.md](Pulse%20-%20Project%20Roadmap.md) tracks milestones and dated progress notes.
-- [HANDOFF.md](HANDOFF.md) records the current state for the next working session.
-- [AGENTS.md](AGENTS.md) describes that workflow.
